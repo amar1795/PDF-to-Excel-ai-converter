@@ -5,3 +5,4 @@ dist/
 venv/
 ImageOutput/
 json_output/
+result/
