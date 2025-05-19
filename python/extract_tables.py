@@ -31,7 +31,6 @@ print(f"Output will be saved to: {output_excel_file}")
 image_folder = "ImageOutput"  # Specify the folder containing your images
 
 
-
 # Ensure the image folder exists
 os.makedirs(image_folder, exist_ok=True)
 
@@ -71,7 +70,11 @@ if not extract_images_from_pdf(pdf_path, image_folder):
     print("Image extraction from PDF failed. Exiting.")
     exit()
 
-image_files = [f for f in os.listdir(image_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
+# Get a sorted list of image files
+image_files = sorted(
+    [f for f in os.listdir(image_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))],
+    key=lambda x: int(re.search(r'(\d+)', x).group(1)) if re.search(r'(\d+)', x) else float('inf')
+)
 
 if not image_files:
     print(f"No image files found in the folder '{image_folder}'.")
