@@ -2,9 +2,8 @@ from google import genai
 from dotenv import load_dotenv
 import os
 import json
-import csv
+import pandas as pd
 import re
-
 
 # Load the .env file
 load_dotenv()
@@ -12,62 +11,61 @@ load_dotenv()
 api_key = os.getenv("API_KEY")
 
 client = genai.Client(api_key=api_key)
-my_file = client.files.upload(file="1.jpg")
 
-prompt = "Extract the table from the attached document. The table contains the following columns: [Column 1 name]: [data type/description], [Column 2 name]: [data type/description], ... Return the extracted data in JSON format, using an array of objects, where each object represents a row in the table. Ignore any irrelevant text or data outside the table. If a value is missing in the table, set it to null in the JSON output."
+image_folder = "ImageOutput"  # Specify the folder containing your images
+output_excel_file = "output.xlsx"
 
+# Ensure the image folder exists
+if not os.path.exists(image_folder):
+    print(f"Error: Image folder '{image_folder}' not found.")
+    exit()
 
-response = client.models.generate_content(
-        model="gemini-2.0-flash",
+image_files = [f for f in os.listdir(image_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
 
-    contents=[my_file, prompt],
-)
-# print(response.text)
+if not image_files:
+    print(f"No image files found in the folder '{image_folder}'.")
+    exit()
 
-json_output = response.text
-response_text = response.text
-json_output= response.text
+writer = pd.ExcelWriter(output_excel_file, engine='xlsxwriter')  # Use xlsxwriter for creating multiple sheets
 
-# Save the response text to a file
-# output_file = "api_response.txt"
-# try:
-#     with open(output_file, "w", encoding="utf-8") as f:
-#         f.write(response_text)
-#     print(f"API response saved to: {output_file}")
-# except Exception as e:
-#     print(f"An error occurred while saving the response to a file: {e}")
+for image_file in image_files:
+    image_path = os.path.join(image_folder, image_file)
+    try:
+        my_file = client.files.upload(file=image_path)
 
-# Extract the valid JSON part using regex
-json_match = re.search(r'```json\s*([\s\S]*?)\s*```', response_text)
-if json_match:
-    json_string = json_match.group(1).strip()
-else:
-    json_string = response_text.strip()  # Try the whole response if no ```json``` block
+        prompt = "Extract the table from the attached document. The table contains the following columns: [Column 1 name]: [data type/description], [Column 2 name]: [data type/description], ... Return the extracted data in JSON format, using an array of objects, where each object represents a row in the table. Ignore any irrelevant text or data outside the table. If a value is missing in the table, set it to null in the JSON output."
 
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[my_file, prompt],
+        )
 
-try:
-    data = json.loads(json_string)
+        response_text = response.text
 
-    if data and isinstance(data, list) and len(data) > 0:
-        # Extract header from the first dictionary's keys
-        header = list(data[0].keys())
+        # Extract the valid JSON part using regex
+        json_match = re.search(r'```json\s*([\s\S]*?)\s*```', response_text)
+        if json_match:
+            json_string = json_match.group(1).strip()
+        else:
+            json_string = response_text.strip()
 
-        with open("output.csv", "w", newline="", encoding="utf-8") as csvfile:
-            writer = csv.writer(csvfile)
+        data = json.loads(json_string)
 
-            # Write the header row
-            writer.writerow(header)
+        if data and isinstance(data, list) and len(data) > 0:
+            df = pd.DataFrame(data)
+            sheet_name = os.path.splitext(image_file)[0]  # Use filename without extension as sheet name
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+            print(f"Data from {image_file} saved to sheet '{sheet_name}' in {output_excel_file}")
+        else:
+            print(f"No valid JSON data found for {image_file}.")
 
-            # Write the data rows
-            for row_dict in data:
-                writer.writerow([row_dict.get(col, None) for col in header])
+    except FileNotFoundError:
+        print(f"Error: Image file '{image_path}' not found.")
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON for {image_file}: {e}")
+        print(f"Raw response from API (after cleaning): {json_string}")
+    except Exception as e:
+        print(f"An error occurred while processing {image_file}: {e}")
 
-        print("JSON data successfully converted to output.csv")
-    else:
-        print("No valid JSON data or empty list received from the API.")
-
-except json.JSONDecodeError as e:
-    print(f"Error decoding JSON: {e}")
-    print(f"Raw response from API: {json_string}")
-except Exception as e:
-    print(f"An error occurred during CSV conversion: {e}")
+writer.close()
+print(f"All data saved to {output_excel_file}")

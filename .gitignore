@@ -6,3 +6,5 @@ venv/
 ImageOutput/
 json_output/
 result/
+*~$output.xlsx
+output.xlsx
