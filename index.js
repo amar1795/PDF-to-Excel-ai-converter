@@ -15,13 +15,12 @@ function createWindow() {
       contextIsolation: false,
     },
   });
-
   mainWindow.loadFile('index.html');
   
-  // Open dev tools on startup during development
-  if (!app.isPackaged) {
-    mainWindow.webContents.openDevTools();
-  }
+  // Uncomment the following lines to open DevTools during development
+  // if (!app.isPackaged) {
+  //   mainWindow.webContents.openDevTools();
+  // }
 }
 
 app.whenReady().then(createWindow);

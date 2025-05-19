@@ -15,8 +15,13 @@ api_key = os.getenv("API_KEY")
 
 client = genai.Client(api_key=api_key)
 
-# Get PDF path from command line arguments or use default
-pdf_path = sys.argv[1] if len(sys.argv) > 1 else "VNHPL FY21.pdf"
+# Get PDF path from command line arguments
+if len(sys.argv) <= 1:
+    print("Error: No PDF file specified.")
+    print("Usage: python extract_tables.py <pdf_file> [output_excel_file]")
+    sys.exit(1)
+
+pdf_path = sys.argv[1]
 print(f"Processing PDF: {pdf_path}")
 
 # Get output Excel file path from command line arguments or use default
