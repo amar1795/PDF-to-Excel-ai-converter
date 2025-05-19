@@ -98,6 +98,12 @@
       border-left-color: #3498db;
       animation: spin 1s linear infinite;
       margin-right: 10px;
+    }    #timer-display {
+      font-family: monospace;
+      color: #3498db;
+      font-weight: bold;
+      margin-top: 10px;
+      font-size: 16px;
     }
     @keyframes spin {
       0% { transform: rotate(0deg); }
@@ -132,17 +138,14 @@
       <button id="select-button">Select PDF</button>
       <div class="file-path" id="file-path">No file selected</div>
     </div>
-    
-    <div class="button-container">
+      <div class="button-container">
       <button id="process-button" disabled>Process PDF</button>
-      <button id="test-ocr" class="secondary-button">Test OCR Installation</button>
     </div>
-    
     <div class="loading" id="loading">
       <div class="spinner"></div>
       <p>Processing PDF, please wait...</p>
+      <p id="timer-display">Time elapsed: 0s</p>
     </div>
-    
     <div class="result-section" id="result-section">
       <h2>Result</h2>
       <p id="result-message"></p>
