@@ -129,8 +129,7 @@
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
-    }
-    .footer {
+    }    .footer {
       margin-top: 40px;
       text-align: center;
       color: #7f8c8d;
@@ -144,17 +143,64 @@
       border-radius: 5px;
       margin: 20px 0;
     }
+    .api-token-section {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 15px;
+      position: relative;
+    }
+    #token-status-container {
+      display: flex;
+      align-items: center;
+      margin-right: 10px;
+    }
+    #token-input-container {
+      display: flex;
+      align-items: center;
+    }
+    #token-actions-container {
+      display: flex;
+      gap: 5px;
+    }
+    #api-token-input {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-right: 5px;
+    }
+    .padlock-icon {
+      font-size: 16px;
+      margin-left: 5px;
+      color: #27ae60;
+    }
+    .hidden {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>PDF Table Extractor</h1>
-    
-    <div class="info-box">
+      <div class="info-box">
       This tool extracts tables from PDF files and saves them as Excel files. For scanned PDFs, AI technology is used to recognize text.
     </div>
     
     <div class="file-section">
+      <div class="api-token-section">
+        <div id="token-status-container">
+          <span id="token-status-text">Please add token</span>
+          <span id="token-added-icon" class="hidden"><i class="padlock-icon">🔒</i></span>
+        </div>
+        <div id="token-input-container">
+          <input type="password" id="api-token-input" placeholder="Enter Google API Key">
+          <button id="add-token-button">Add</button>
+        </div>
+        <div id="token-actions-container" class="hidden">
+          <button id="edit-token-button">Edit</button>
+          <button id="remove-token-button">Remove</button>
+        </div>
+      </div>
       <h2>Select PDF File</h2>
       <button id="select-button">Select PDF</button>
       <div class="file-path" id="file-path">No file selected</div>

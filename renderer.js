@@ -1,6 +1,7 @@
 const { ipcRenderer } = require('electron');
 
-document.addEventListener('DOMContentLoaded', () => {  const selectButton = document.getElementById('select-button');
+document.addEventListener('DOMContentLoaded', () => {  
+  const selectButton = document.getElementById('select-button');
   const filePathDisplay = document.getElementById('file-path');
   const processButton = document.getElementById('process-button');
   const resultSection = document.getElementById('result-section');
@@ -11,35 +12,106 @@ document.addEventListener('DOMContentLoaded', () => {  const selectButton = docu
   const loadingIndicator = document.getElementById('loading');
   const timerDisplay = document.getElementById('timer-display');
   
+  // API Token elements
+  const apiTokenInput = document.getElementById('api-token-input');
+  const addTokenButton = document.getElementById('add-token-button');
+  const editTokenButton = document.getElementById('edit-token-button');
+  const removeTokenButton = document.getElementById('remove-token-button');
+  const tokenStatusText = document.getElementById('token-status-text');
+  const tokenAddedIcon = document.getElementById('token-added-icon');
+  const tokenInputContainer = document.getElementById('token-input-container');
+  const tokenActionsContainer = document.getElementById('token-actions-container');
+  
   let selectedFile = null;
   let resultFile = null;
   let isSelectingFile = false; // Flag to prevent multiple dialogs
   let timerInterval = null;
   let startTime = null;
   let elapsedTime = 0;
+  let apiToken = localStorage.getItem('googleApiToken') || '';
   
   // Hide result section initially
   resultSection.style.display = 'none';
   loadingIndicator.style.display = 'none';
+    // Initialize API token UI based on stored value
+  updateTokenUI();
+    // API Token handling functions
+  function updateTokenUI() {
+    if (apiToken) {
+      // Token exists
+      tokenStatusText.textContent = 'Token added';
+      tokenAddedIcon.classList.remove('hidden');
+      tokenInputContainer.classList.add('hidden');
+      tokenActionsContainer.classList.remove('hidden');
+      processButton.disabled = !selectedFile; // Enable process button if file is selected
+    } else {
+      // No token
+      tokenStatusText.textContent = 'Please add token';
+      tokenAddedIcon.classList.add('hidden');
+      tokenInputContainer.classList.remove('hidden');
+      tokenActionsContainer.classList.add('hidden');
+      processButton.disabled = true; // Disable process button until token is added
+    }
+  }
+  
+  // Listen for get-api-token request from main process
+  ipcRenderer.on('get-api-token', () => {
+    const savedToken = localStorage.getItem('googleApiToken');
+    if (savedToken) {
+      apiToken = savedToken;
+      ipcRenderer.send('set-api-token', savedToken);
+      updateTokenUI();
+    }
+  });
+  
+  // Add token button
+  addTokenButton.addEventListener('click', () => {
+    const token = apiTokenInput.value.trim();
+    if (token) {
+      apiToken = token;
+      localStorage.setItem('googleApiToken', token);
+      // Send token to main process
+      ipcRenderer.send('set-api-token', token);
+      apiTokenInput.value = '';
+      updateTokenUI();
+    }
+  });
+  
+  // Edit token button
+  editTokenButton.addEventListener('click', () => {
+    // Show input with current token
+    apiTokenInput.value = apiToken;
+    tokenInputContainer.classList.remove('hidden');
+    tokenActionsContainer.classList.add('hidden');
+  });
+  
+  // Remove token button
+  removeTokenButton.addEventListener('click', () => {
+    apiToken = '';
+    localStorage.removeItem('googleApiToken');
+    // Notify main process
+    ipcRenderer.send('set-api-token', '');
+    updateTokenUI();
+  });
   
   selectButton.addEventListener('click', async () => {
     // Prevent multiple dialogs from opening
     if (isSelectingFile) return;
     
-    isSelectingFile = true;
-    try {
+    isSelectingFile = true;    try {
       const filePath = await ipcRenderer.invoke('select-pdf');
       if (filePath) {
         selectedFile = filePath;
         filePathDisplay.textContent = filePath;
-        processButton.disabled = false;
+        // Enable process button only if we have both file and API token
+        processButton.disabled = !apiToken;
       }
     } finally {
       isSelectingFile = false;
     }
   });
-    processButton.addEventListener('click', () => {
-    if (!selectedFile) return;
+  processButton.addEventListener('click', () => {
+    if (!selectedFile || !apiToken) return;
     
     // Show loading indicator
     loadingIndicator.style.display = 'block';

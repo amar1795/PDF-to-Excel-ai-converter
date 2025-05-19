@@ -3,6 +3,9 @@ const path = require('path');
 const { execFile, spawn } = require('child_process');
 const fs = require('fs');
 
+// Store API token globally
+global.apiToken = '';
+
 let mainWindow;
 
 function createWindow() {
@@ -14,13 +17,18 @@ function createWindow() {
       nodeIntegration: true,
       contextIsolation: false,
     },
-  });
-  mainWindow.loadFile('index.html');
+  });  mainWindow.loadFile('index.html');
   
   // Uncomment the following lines to open DevTools during development
   // if (!app.isPackaged) {
   //   mainWindow.webContents.openDevTools();
   // }
+  
+  // Listen for when the window is ready
+  mainWindow.webContents.on('did-finish-load', () => {
+    // Request API token from renderer
+    mainWindow.webContents.send('get-api-token');
+  });
 }
 
 app.whenReady().then(createWindow);
@@ -69,8 +77,13 @@ ipcMain.handle('open-output-dir', async (event) => {
 
 // Open the result file
 ipcMain.handle('open-result', async (event, filePath) => {
-  shell.openPath(filePath);
-  return true;
+  shell.openPath(filePath);  return true;
+});
+
+// Set the API token
+ipcMain.on('set-api-token', (event, token) => {
+  global.apiToken = token;
+  console.log('API token updated');
 });
 
 ipcMain.on('process-pdf', (event, pdfPath) => {
@@ -108,10 +121,14 @@ ipcMain.on('process-pdf', (event, pdfPath) => {
   console.log(`Script path: ${pythonScriptPath}`);
   console.log(`PDF path: ${pdfPath}`);
   console.log(`Output path: ${outputPath}`);
-
   // Set environment variables to increase verbosity if needed
   const env = Object.assign({}, process.env);
   env.PYTHONUNBUFFERED = '1';  // Force unbuffered stdout/stderr
+  
+  // Add API token to environment if available
+  if (global.apiToken) {
+    env.API_KEY = global.apiToken;
+  }
 
   // Use spawn instead of execFile for better output handling
   const pythonProcess = spawn(

@@ -8,10 +8,16 @@ import sys
 from pdf2image import convert_from_path  # Import pdf2image
 import shutil  # Import the shutil module for deleting folders
 
-# Load the .env file
-load_dotenv()
-
+# Try to load API key from environment variable first, then fallback to .env file
 api_key = os.getenv("API_KEY")
+if not api_key:
+    # Load the .env file as fallback
+    load_dotenv()
+    api_key = os.getenv("API_KEY")
+
+if not api_key:
+    print("Error: No API key provided. Please add your Google API key in the application.")
+    sys.exit(1)
 
 client = genai.Client(api_key=api_key)
 
