@@ -4,6 +4,7 @@ import os
 import json
 import pandas as pd
 import re
+import sys
 from pdf2image import convert_from_path  # Import pdf2image
 import shutil  # Import the shutil module for deleting folders
 
@@ -14,10 +15,15 @@ api_key = os.getenv("API_KEY")
 
 client = genai.Client(api_key=api_key)
 
-pdf_path = "VNHPL FY21.pdf"  # Specify the path to your PDF file
+# Get PDF path from command line arguments or use default
+pdf_path = sys.argv[1] if len(sys.argv) > 1 else "VNHPL FY21.pdf"
+print(f"Processing PDF: {pdf_path}")
+
+# Get output Excel file path from command line arguments or use default
+output_excel_file = sys.argv[2] if len(sys.argv) > 2 else "output.xlsx"
+print(f"Output will be saved to: {output_excel_file}")
 
 image_folder = "ImageOutput"  # Specify the folder containing your images
-output_excel_file = "output.xlsx"
 
 
 
