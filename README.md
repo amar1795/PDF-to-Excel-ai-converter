@@ -7,7 +7,7 @@ A cross-platform desktop application built using **Electron** (for the frontend)
 
 Before you begin, ensure you have the following installed:
 * [Node.js and npm](https://nodejs.org/)
-* [Python 3.9 and above](https://www.python.org/downloads/)
+* [Python 3.10 and above](https://www.python.org/downloads/)
 
 ## Installation
 
