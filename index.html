@@ -21,25 +21,31 @@
       color: #2c3e50;
       text-align: center;
       margin-bottom: 30px;
-    }
-    .file-section {
+    }    .file-section {
       margin-bottom: 20px;
       padding: 15px;
       border: 1px solid #ddd;
       border-radius: 5px;
       background-color: #f9f9f9;
+      text-align: center;
+    }
+    .file-section h2 {
+      text-align: center;
+      color: #2c3e50;
     }
     .file-path {
       word-break: break-all;
       margin: 10px 0;
       font-family: monospace;
       color: #444;
+      text-align: center;
     }
     .button-container {
       margin: 20px 0;
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
+      justify-content: center;
     }
     button {
       background-color: #3498db;
@@ -69,12 +75,19 @@
     }
     #open-result, #open-folder {
       background-color: #27ae60;
-    }
-    .result-section {
+    }    .result-section {
       margin-top: 30px;
       padding: 15px;
       border-radius: 5px;
       border: 1px solid #ddd;
+      text-align: center;
+    }
+    .result-section h2 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    #result-message {
+      text-align: center;
     }
     .success {
       color: #27ae60;
@@ -83,12 +96,18 @@
     .error {
       color: #e74c3c;
       font-weight: bold;
-    }
-    .loading {
+    }    .loading {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       margin: 20px 0;
+      text-align: center;
+    }
+    .spinner-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .spinner {
       border: 4px solid rgba(0, 0, 0, 0.1);
@@ -104,6 +123,8 @@
       font-weight: bold;
       margin-top: 10px;
       font-size: 16px;
+      text-align: center;
+      display: block;
     }
     @keyframes spin {
       0% { transform: rotate(0deg); }
@@ -130,7 +151,7 @@
     <h1>PDF Table Extractor</h1>
     
     <div class="info-box">
-      This tool extracts tables from PDF files and saves them as Excel files. For scanned PDFs, OCR technology is used to recognize text.
+      This tool extracts tables from PDF files and saves them as Excel files. For scanned PDFs, AI technology is used to recognize text.
     </div>
     
     <div class="file-section">
@@ -140,10 +161,11 @@
     </div>
       <div class="button-container">
       <button id="process-button" disabled>Process PDF</button>
-    </div>
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p>Processing PDF, please wait...</p>
+    </div>    <div class="loading" id="loading">
+      <div class="spinner-container">
+        <div class="spinner"></div>
+        <p>Processing PDF, please wait...</p>
+      </div>
       <p id="timer-display">Time elapsed: 0s</p>
     </div>
     <div class="result-section" id="result-section">
@@ -157,7 +179,7 @@
     </div>
     
     <div class="footer">
-      <p>PDF Table Extractor using pdfplumber and PaddleOCR</p>
+      <p>PDF Table Extractor using Pandas and Artificial Intelligence</p>
     </div>
   </div>
   
