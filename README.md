@@ -85,8 +85,19 @@ Once you have completed the installation and configuration steps:
 
 ## Contributing
 
-[Optional: Add guidelines for how others can contribute to your project, if applicable.]
+
+Contributions are welcome! If you'd like to improve the project, follow these steps:
+
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature-name`)
+3. Make your changes
+4. Commit your changes (`git commit -m "Add some feature"`)
+5. Push to the branch (`git push origin feature-name`)
+6. Open a Pull Request
+
+Please make sure your code follows the existing style and includes relevant tests or documentation.
 
 ## License
 
-[Optional: Specify the license for your project, e.g., MIT License.]
+This project is licensed under the [MIT License](LICENSE).  
+You are free to use, modify, and distribute this software as long as the original license and copyright notice are included.
