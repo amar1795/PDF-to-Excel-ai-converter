@@ -19,13 +19,17 @@ client = genai.Client(api_key=api_key)
 if len(sys.argv) <= 1:
     print("Error: No PDF file specified.")
     print("Usage: python extract_tables.py <pdf_file> [output_excel_file]")
+    print("Note: If output_excel_file is not specified, the input PDF filename will be used with .xlsx extension")
     sys.exit(1)
 
 pdf_path = sys.argv[1]
 print(f"Processing PDF: {pdf_path}")
 
-# Get output Excel file path from command line arguments or use default
-output_excel_file = sys.argv[2] if len(sys.argv) > 2 else "output.xlsx"
+# Get the input file name without path and extension
+input_filename = os.path.splitext(os.path.basename(pdf_path))[0]
+
+# Get output Excel file path from command line arguments or use input filename
+output_excel_file = sys.argv[2] if len(sys.argv) > 2 else f"{input_filename}.xlsx"
 print(f"Output will be saved to: {output_excel_file}")
 
 image_folder = "ImageOutput"  # Specify the folder containing your images

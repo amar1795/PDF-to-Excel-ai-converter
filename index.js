@@ -74,7 +74,9 @@ ipcMain.handle('open-result', async (event, filePath) => {
 });
 
 ipcMain.on('process-pdf', (event, pdfPath) => {
-  const outputPath = path.join(__dirname, 'output', 'result.xlsx');
+  // Get the base filename without extension
+  const inputFilename = path.basename(pdfPath, path.extname(pdfPath));
+  const outputPath = path.join(__dirname, 'output', `${inputFilename}.xlsx`);
   
   // Ensure output directory exists
   if (!fs.existsSync(path.join(__dirname, 'output'))) {
