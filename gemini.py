@@ -4,6 +4,8 @@ import os
 import json
 import pandas as pd
 import re
+from pdf2image import convert_from_path  # Import pdf2image
+import shutil  # Import the shutil module for deleting folders
 
 # Load the .env file
 load_dotenv()
@@ -12,12 +14,50 @@ api_key = os.getenv("API_KEY")
 
 client = genai.Client(api_key=api_key)
 
+pdf_path = "Audited Financials_Kunstocom_22-23 (1).pdf"  # Specify the path to your PDF file
+
 image_folder = "ImageOutput"  # Specify the folder containing your images
 output_excel_file = "output.xlsx"
 
+
+
 # Ensure the image folder exists
-if not os.path.exists(image_folder):
-    print(f"Error: Image folder '{image_folder}' not found.")
+os.makedirs(image_folder, exist_ok=True)
+
+# Clear the contents of the image folder
+for filename in os.listdir(image_folder):
+    file_path = os.path.join(image_folder, filename)
+    try:
+        if os.path.isfile(file_path) or os.path.islink(file_path):
+            os.unlink(file_path)
+        elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)  # If there are subdirectories, remove them too
+    except Exception as e:
+        print(f"Error deleting item '{file_path}' in image folder: {e}")
+
+
+def extract_images_from_pdf(pdf_path, output_folder):
+    """Converts each page of a PDF into an image and saves them."""
+    try:
+        images = convert_from_path(pdf_path)
+        if not images:
+            print("No pages found in the PDF.")
+            return False
+        print(f"Successfully converted {len(images)} pages from PDF to images.")
+        for idx, image in enumerate(images):
+            img_path = os.path.join(output_folder, f"pdf_page_{idx+1}.jpg")
+            image.save(img_path, "JPEG")
+            print(f"Saved image: {img_path}")
+        return True
+    except Exception as e:
+        print(f"Error converting PDF to images: {e}")
+        return False
+
+
+# Extract images from PDF
+print(f"Extracting images from '{pdf_path}' to folder '{image_folder}'...")
+if not extract_images_from_pdf(pdf_path, image_folder):
+    print("Image extraction from PDF failed. Exiting.")
     exit()
 
 image_files = [f for f in os.listdir(image_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
