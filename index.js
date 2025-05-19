@@ -86,6 +86,79 @@ ipcMain.on('set-api-token', (event, token) => {
   console.log('API token updated');
 });
 
+// Validate API key
+ipcMain.handle('validate-api-key', async (event, apiKey) => {
+  return new Promise((resolve, reject) => {
+    const pythonScriptPath = app.isPackaged
+      ? path.join(process.resourcesPath, 'python', 'extract_tables.py')
+      : path.join(__dirname, 'python', 'extract_tables.py');
+
+    // Use the appropriate python executable
+    const pythonCommand = app.isPackaged
+      ? path.join(__dirname, 'venv', 'Scripts', 'python.exe')
+      : (process.platform === 'win32' ? 'python' : 'python3');
+
+    console.log(`Validating API key using: ${pythonCommand} ${pythonScriptPath} --validate`);
+
+    // Set environment variables for validation
+    const env = Object.assign({}, process.env);
+    env.API_KEY = apiKey;
+    env.VALIDATE_ONLY = '1'; // Tell the script to only validate the key
+    env.PYTHONUNBUFFERED = '1'; // Ensure unbuffered output for better logging
+
+    // Run the validation
+    const pythonProcess = spawn(pythonCommand, [pythonScriptPath, '--validate'], { env });
+
+    let stdout = '';
+    let stderr = '';
+
+    pythonProcess.stdout.on('data', (data) => {
+      const output = data.toString();
+      console.log(`Validation stdout: ${output}`);
+      stdout += output;
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      const output = data.toString();
+      console.log(`Validation stderr: ${output}`);
+      stderr += output;
+    });
+
+    // Add a timeout in case the validation takes too long
+    const timeout = setTimeout(() => {
+      console.log('API key validation timed out after 10 seconds');
+      pythonProcess.kill();
+      resolve({ 
+        isValid: false, 
+        message: 'API key validation timed out. This might indicate connectivity issues or an invalid key.' 
+      });
+    }, 10000); // 10 seconds timeout
+
+    pythonProcess.on('close', (code) => {
+      clearTimeout(timeout);
+      
+      console.log(`Validation process exited with code ${code}`);
+      console.log(`Validation stdout: ${stdout}`);
+      console.log(`Validation stderr: ${stderr}`);
+      
+      // Check the output for success message
+      const isValid = code === 0 && stdout.includes('API key verification successful');
+      const errorMessage = stderr || stdout.replace(/.*API key verification failed:/, '').trim();
+      
+      resolve({ 
+        isValid, 
+        message: isValid ? 'Valid API key' : errorMessage || 'API key validation failed'
+      });
+    });
+
+    pythonProcess.on('error', (err) => {
+      clearTimeout(timeout);
+      console.error(`Validation process error: ${err}`);
+      reject(err);
+    });
+  });
+});
+
 ipcMain.on('process-pdf', (event, pdfPath) => {
   // Get the base filename without extension
   const inputFilename = path.basename(pdfPath, path.extname(pdfPath));

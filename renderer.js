@@ -63,17 +63,73 @@ document.addEventListener('DOMContentLoaded', () => {
       updateTokenUI();
     }
   });
-  
-  // Add token button
+    // Add token button
   addTokenButton.addEventListener('click', () => {
     const token = apiTokenInput.value.trim();
     if (token) {
-      apiToken = token;
-      localStorage.setItem('googleApiToken', token);
-      // Send token to main process
-      ipcRenderer.send('set-api-token', token);
-      apiTokenInput.value = '';
-      updateTokenUI();
+      // Show loading state
+      tokenStatusText.textContent = 'Validating...';
+      addTokenButton.disabled = true;
+        // Send token to main process for validation
+      ipcRenderer.invoke('validate-api-key', token)
+        .then(result => {
+          if (result.isValid) {
+            // Token is valid
+            apiToken = token;
+            localStorage.setItem('googleApiToken', token);
+            // Send token to main process
+            ipcRenderer.send('set-api-token', token);
+            apiTokenInput.value = '';
+            updateTokenUI();
+          } else {
+            // Token is invalid
+            apiTokenInput.classList.add('invalid-input');
+            tokenStatusText.textContent = 'Invalid API key';
+            tokenStatusText.classList.add('error');
+            console.error('API Key validation error:', result.message);
+            
+            // Display the actual error in a tooltip or as a visible message
+            const errorMsg = document.createElement('div');
+            errorMsg.textContent = result.message.slice(0, 150) + (result.message.length > 150 ? '...' : '');
+            errorMsg.className = 'api-error-message';
+            errorMsg.style.position = 'absolute';
+            errorMsg.style.top = '100%';
+            errorMsg.style.left = '0';
+            errorMsg.style.backgroundColor = '#fceae9';
+            errorMsg.style.padding = '5px';
+            errorMsg.style.borderRadius = '3px';
+            errorMsg.style.border = '1px solid #e74c3c';
+            errorMsg.style.zIndex = '100';
+            errorMsg.style.color = '#e74c3c';
+            errorMsg.style.fontSize = '12px';
+            errorMsg.style.maxWidth = '300px';
+            
+            // Add the error message to the DOM
+            const tokenContainer = document.getElementById('token-input-container');
+            tokenContainer.style.position = 'relative';
+            tokenContainer.appendChild(errorMsg);
+            
+            // Remove the error message after some time
+            setTimeout(() => {
+              tokenStatusText.classList.remove('error');
+              apiTokenInput.classList.remove('invalid-input');
+              tokenStatusText.textContent = 'Please add token';
+              tokenContainer.removeChild(errorMsg);
+            }, 5000);
+          }
+        })
+        .catch(error => {
+          console.error('Error validating API key:', error);
+          tokenStatusText.textContent = 'Validation error';
+          tokenStatusText.classList.add('error');
+          setTimeout(() => {
+            tokenStatusText.classList.remove('error');
+            tokenStatusText.textContent = 'Please add token';
+          }, 3000);
+        })
+        .finally(() => {
+          addTokenButton.disabled = false;
+        });
     }
   });
   

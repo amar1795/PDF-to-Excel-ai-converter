@@ -8,6 +8,33 @@ import sys
 from pdf2image import convert_from_path  # Import pdf2image
 import shutil  # Import the shutil module for deleting folders
 
+def verify_api_key(api_key):
+    """Verify if the provided API key is valid by making a test request."""
+    try:
+        # Initialize the client with the provided API key
+        test_client = genai.Client(api_key=api_key)
+        
+        # Try to make a simple content generation request
+        # This is a more reliable test than just listing models
+        response = test_client.models.generate_content(
+            model="gemini-1.5-flash",  # Using a standard model
+            contents="Hello, can you hear me?",  # Simple prompt
+        )
+        
+        # Check if we got a valid response
+        if response and hasattr(response, 'text') and response.text:
+            print(f"Verification response: {response.text[:50]}...")
+            return True, "API key verification successful! The key is valid."
+        else:
+            return False, "API key verification failed: Received empty response from API."
+    except Exception as e:
+        error_message = str(e)
+        print(f"Verification error: {error_message}")
+        if "401" in error_message or "authentication" in error_message.lower() or "authorized" in error_message.lower():
+            return False, f"API key verification failed: Invalid or expired API key. Error: {error_message}"
+        else:
+            return False, f"API key verification failed: Error connecting to Google API. Error: {error_message}"
+
 # Try to load API key from environment variable first, then fallback to .env file
 api_key = os.getenv("API_KEY")
 if not api_key:
@@ -19,6 +46,24 @@ if not api_key:
     print("Error: No API key provided. Please add your Google API key in the application.")
     sys.exit(1)
 
+# Verify the API key before proceeding
+is_valid, message = verify_api_key(api_key)
+if not is_valid:
+    print(message)
+    sys.exit(1)
+else:
+    print(message)
+
+# Check if this is a validation-only run
+if len(sys.argv) > 1 and sys.argv[1] == '--validate':
+    # We've already validated the API key above, so just exit successfully
+    if is_valid:
+        print("Validation-only mode: API key is valid")
+    else:
+        print(f"Validation-only mode: API key validation failed: {message}")
+    sys.exit(0 if is_valid else 1)
+
+# If we get here, we're doing a full PDF processing run
 client = genai.Client(api_key=api_key)
 
 # Get PDF path from command line arguments
