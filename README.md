@@ -1,4 +1,4 @@
-# Gemini AI Desktop App
+# PDF to EXCEL AI Converter 
 
 A cross-platform desktop application built using **Electron** (for the frontend) and **Python** (for backend logic), powered by **Google's Gemini AI**. This app processes documents like PDFs and spreadsheets with AI-driven intelligence.
 
