@@ -83,6 +83,118 @@ Once you have completed the installation and configuration steps:
     npm start
     ```
 
+### Build for Production (Standalone Windows Application)
+
+To create a standalone executable (`.exe`) for Windows, follow these steps. This process will bundle your Electron application, Python environment, and all necessary dependencies into a single installer.
+
+#### 1. Prepare Poppler Binaries
+
+Your application uses Poppler for PDF image conversion. You need to include its binaries directly in your project so they can be bundled.
+
+* **Download Poppler for Windows:** If you haven't already, download the pre-built binaries from [https://github.com/oschwartz10612/poppler-windows/releases](https://github.com/oschwartz10612/poppler-windows/releases).
+* **Extract and Place:** Extract the downloaded archive. Inside, you'll typically find a `bin` folder.
+* **Copy to Project:** Copy the entire `bin` folder (containing `pdftocairo.exe`, `pdfinfo.exe`, etc.) into your project's `resources/poppler/` directory. Create these directories if they don't exist.
+
+    Your project structure for Poppler should look like this:
+    ```
+    your-project-root/
+    ├── resources/
+    │   └── poppler/
+    │       └── bin/  <-- Poppler executables go here
+    ├── python/
+    ├── venv/
+    ├── index.js
+    ├── package.json
+    └── ...
+    ```
+
+#### 2. Verify `package.json` Configuration
+
+Ensure your `package.json` contains the necessary metadata and configuration for Electron Forge's Squirrel.Windows maker.
+
+* Open your `package.json` file.
+* **Root Level:** Verify that `productName`, `description`, and `author` fields are present and correctly filled out.
+    ```json
+    {
+      "name": "your-app-name",
+      "version": "1.0.0",
+      "productName": "Your App Display Name", // IMPORTANT: This is used for the installer and app name
+      "description": "A concise description of your app.",
+      "author": "Your Name/Company",
+      // ... rest of your package.json
+    }
+    ```
+* **`config.forge.makers` Section:** Check the configuration for `@electron-forge/maker-squirrel`. The `name`, `authors`, and `description` within its `config` block are crucial.
+    ```json
+    "config": {
+      "forge": {
+        "packagerConfig": {
+          "executableName": "YourExecutableName", // e.g., PDFTableExtractor
+          "extraResource": [
+            "python",
+            "venv",
+            "resources/poppler" // Confirms Poppler is bundled
+          ],
+          // ... other packagerConfig
+        },
+        "makers": [
+          {
+            "name": "@electron-forge/maker-squirrel",
+            "config": {
+              "name": "your_app_internal_name", // A short, internal name (e.g., pdftoexcelconverter)
+              "authors": "Your Name or Company Name",
+              "description": "A brief description for the installer."
+            }
+          }
+        ]
+      }
+    }
+    ```
+
+#### 3. Clean Build Artifacts (Recommended)
+
+Before building, it's good practice to remove any remnants from previous builds to ensure a clean start.
+
+```bash
+# For Windows (Command Prompt or PowerShell):
+rmdir /s /q out
+rmdir /s /q .cache
+
+# For macOS/Linux:
+rm -rf out .cache
+
+npm cache clean --force
+   
+
+#### 4.Generate the Executable Installer
+
+-------------------------------------
+
+To create your application's executable installer, run the **Electron Forge make** command directly from your project's root directory:
+
+Bash
+
+```
+
+npm run make
+
+```
+
+This process might take a few minutes as it's busy packaging Electron, your Python environment, and all of your project's dependencies.
+
+**Troubleshooting:** If you run into any issues during this step (like "dummy update.exe" errors, "file not found," or permissions problems), try launching your terminal (either Command Prompt or PowerShell) **as an administrator** and then run `npm run make` again. It's also a good idea to check that your antivirus software isn't getting in the way.
+
+* * * * *
+
+#### 5. Locate and Test the Installer
+
+---------------------------------
+
+Once the build process is complete, navigate to the **out** directory within your project folder. You'll find the installer nestled within a subdirectory structure, usually something like `out\make\squirrel.windows\x64\`.
+
+Look for a **.exe** file. Its name will be similar to "Your App Display Name Setup.exe" or "YourExecutableName Setup.exe," depending on how you've configured your `productName` or `executableName`.
+
+Go ahead and run this installer to get the application set up on your Windows machine. After it's installed, launch the app from your Start Menu and thoroughly test all its features---including API key validation, PDF conversion, and making sure output files are saved correctly.
 ## Contributing
 
 
