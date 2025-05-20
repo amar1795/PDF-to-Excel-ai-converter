@@ -8,6 +8,18 @@ import sys
 from pdf2image import convert_from_path  # Import pdf2image
 import shutil  # Import the shutil module for deleting folders
 
+# This will be updated dynamically by the Electron app or packaging tool
+# In production, it will be relative to where the bundled Poppler is.
+# For development, you can set it to your local Poppler path
+poppler_path = os.environ.get('POPPLER_PATH', None)
+if poppler_path:
+    os.environ["PATH"] += os.pathsep + poppler_path
+    print(f"Added Poppler path to PATH: {poppler_path}")
+else:
+    print("POPPLER_PATH environment variable not set. pdf2image might rely on system PATH or fail.")
+
+
+
 def verify_api_key(api_key):
     """Verify if the provided API key is valid by making a test request."""
     try:
@@ -67,10 +79,19 @@ if len(sys.argv) > 1 and sys.argv[1] == '--validate':
 client = genai.Client(api_key=api_key)
 
 # Get PDF path from command line arguments
+# if len(sys.argv) <= 1:
+#     print("Error: No PDF file specified.")
+#     print("Usage: python extract_tables.py <pdf_file> [output_excel_file]")
+#     print("Note: If output_excel_file is not specified, the input PDF filename will be used with .xlsx extension")
+#     sys.exit(1)
+
+# pdf_path = sys.argv[1]
+# print(f"Processing PDF: {pdf_path}")
+
 if len(sys.argv) <= 1:
     print("Error: No PDF file specified.")
-    print("Usage: python extract_tables.py <pdf_file> [output_excel_file]")
-    print("Note: If output_excel_file is not specified, the input PDF filename will be used with .xlsx extension")
+    # === UPDATED USAGE MESSAGE ===
+    print("Usage: python extract_tables.py <pdf_file> [output_excel_file] [image_temp_folder]")
     sys.exit(1)
 
 pdf_path = sys.argv[1]
@@ -83,7 +104,10 @@ input_filename = os.path.splitext(os.path.basename(pdf_path))[0]
 output_excel_file = sys.argv[2] if len(sys.argv) > 2 else f"{input_filename}.xlsx"
 print(f"Output will be saved to: {output_excel_file}")
 
-image_folder = "ImageOutput"  # Specify the folder containing your images
+# image_folder = "ImageOutput"  # Specify the folder containing your images
+
+image_folder = sys.argv[3] if len(sys.argv) > 3 else "ImageOutput_temp" # Provide a default for direct script testing
+print(f"Temporary images will be stored in: {image_folder}")
 
 
 # Ensure the image folder exists

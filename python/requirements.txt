@@ -1,0 +1,8 @@
+google-generativeai
+pandas
+pdf2image
+python-dotenv
+xlsxwriter
+paddleocr
+paddlepaddle
+paddlex

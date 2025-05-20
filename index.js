@@ -70,7 +70,10 @@ ipcMain.handle('select-pdf', async (event) => {
 
 // Open the output directory
 ipcMain.handle('open-output-dir', async (event) => {
-  const outputDir = path.join(__dirname, 'output');
+  // const outputDir = path.join(__dirname, 'output');
+  const userDataPath = app.getPath('userData'); // Re-get for consistency
+  const outputDir = path.join(userDataPath, 'output'); // Correct path for output directory
+
   shell.openPath(outputDir);
   return true;
 });
@@ -89,14 +92,23 @@ ipcMain.on('set-api-token', (event, token) => {
 // Validate API key
 ipcMain.handle('validate-api-key', async (event, apiKey) => {
   return new Promise((resolve, reject) => {
+
+
     const pythonScriptPath = app.isPackaged
       ? path.join(process.resourcesPath, 'python', 'extract_tables.py')
       : path.join(__dirname, 'python', 'extract_tables.py');
 
     // Use the appropriate python executable
-    const pythonCommand = app.isPackaged
-      ? path.join(__dirname, 'venv', 'Scripts', 'python.exe')
-      : (process.platform === 'win32' ? 'python' : 'python3');
+    // const pythonCommand = app.isPackaged
+    //   ? path.join(__dirname, 'venv', 'Scripts', 'python.exe')
+    //   : (process.platform === 'win32' ? 'python' : 'python3');
+
+    let pythonCommand;
+    if (app.isPackaged) {
+      pythonCommand = path.join(process.resourcesPath, 'venv', 'Scripts', 'python.exe'); // <-- CHANGE TO THIS
+    } else {
+  pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
+}
 
     console.log(`Validating API key using: ${pythonCommand} ${pythonScriptPath} --validate`);
 
@@ -160,15 +172,34 @@ ipcMain.handle('validate-api-key', async (event, apiKey) => {
 });
 
 ipcMain.on('process-pdf', (event, pdfPath) => {
+
   // Get the base filename without extension
-  const inputFilename = path.basename(pdfPath, path.extname(pdfPath));
-  const outputPath = path.join(__dirname, 'output', `${inputFilename}.xlsx`);
+
+  // const inputFilename = path.basename(pdfPath, path.extname(pdfPath));
+  // const outputPath = path.join(__dirname, 'output', `${inputFilename}.xlsx`);
+
+   const userDataPath = app.getPath('userData'); // Gets a user-writable path
+  const outputDirectory = path.join(userDataPath, 'output'); // Specific folder for Excel output
+  const imageTempDirectory = path.join(userDataPath, 'ImageOutput'); // Specific folder for temporary images
   
   // Ensure output directory exists
-  if (!fs.existsSync(path.join(__dirname, 'output'))) {
-    fs.mkdirSync(path.join(__dirname, 'output'), { recursive: true });
+  // if (!fs.existsSync(path.join(__dirname, 'output'))) {
+  //   fs.mkdirSync(path.join(__dirname, 'output'), { recursive: true });
+  // }
+
+  // Ensure these directories exist. Create them if they don't.
+  if (!fs.existsSync(outputDirectory)) {
+    fs.mkdirSync(outputDirectory, { recursive: true });
+  }
+  if (!fs.existsSync(imageTempDirectory)) {
+      fs.mkdirSync(imageTempDirectory, { recursive: true });
   }
   
+   // Now construct the final output path for the Excel file
+  const inputFilename = path.basename(pdfPath, path.extname(pdfPath));
+  const outputPath = path.join(outputDirectory, `${inputFilename}.xlsx`);
+
+
   // Handle path differences between development and production
   let pythonScriptPath;
   if (app.isPackaged) {
@@ -180,13 +211,10 @@ ipcMain.on('process-pdf', (event, pdfPath) => {
   }
 
   // Get the appropriate python executable based on platform
-  // Use the appropriate python executable
   let pythonCommand;
   if (app.isPackaged) {
-    // In production, use the bundled Python
-    pythonCommand = path.join(__dirname, 'venv', 'Scripts', 'python.exe');
+    pythonCommand = path.join(process.resourcesPath, 'venv', 'Scripts', 'python.exe'); // Corrected path
   } else {
-    // In development, use system Python based on platform
     pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
   }
 
@@ -203,10 +231,19 @@ ipcMain.on('process-pdf', (event, pdfPath) => {
     env.API_KEY = global.apiToken;
   }
 
+  // Add Poppler path for production build
+if (app.isPackaged) {
+  env.POPPLER_PATH = path.join(process.resourcesPath, 'poppler', 'bin');
+} else {
+    // For development, you might have it locally or rely on system PATH
+    // For local development, you could hardcode it here if needed, e.g.:
+    // env.POPPLER_PATH = 'C:\\path\\to\\your\\poppler\\bin';
+}
+
   // Use spawn instead of execFile for better output handling
   const pythonProcess = spawn(
     pythonCommand, 
-    [pythonScriptPath, pdfPath, outputPath],
+    [pythonScriptPath, pdfPath, outputPath,imageTempDirectory],
     { env: env }
   );
 
@@ -300,15 +337,12 @@ function testOcrDependencies() {
     pythonScriptPath = path.join(__dirname, 'python', 'extract_tables.py');
   }
 
-  // Get the appropriate python executable
   let pythonCommand;
-  if (app.isPackaged) {
-    // In production, use the bundled Python
-    pythonCommand = path.join(__dirname, 'venv', 'Scripts', 'python.exe');
-  } else {
-    // In development, use system Python based on platform
-    pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
-  }
+if (app.isPackaged) {
+  pythonCommand = path.join(process.resourcesPath, 'venv', 'Scripts', 'python.exe'); // Corrected path
+} else {
+  pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
+}
   
   mainWindow.webContents.send('test-ocr-start');
   

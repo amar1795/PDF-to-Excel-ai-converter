@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "electron .",
+    "start": "electron-forge start",
     "build": "electron-builder --dir",
     "build:win": "electron-builder --win --config.win.extraMetadata.noSymlinks=true",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "build": {
     "appId": "com.yourdomain.pdftoexcel",
@@ -15,12 +17,16 @@
       "artifactName": "${productName}-${version}.${ext}"
     },
     "asar": true,
-    "asarUnpack": ["python/**/*"],
+    "asarUnpack": [
+      "python/**/*"
+    ],
     "extraResources": [
       {
         "from": "python",
         "to": "python",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "npmRebuild": false,
@@ -38,9 +44,41 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^36.2.0",
-    "electron-builder": "^26.0.12"
+    "@electron-forge/cli": "^7.8.1",
+    "@electron-forge/maker-deb": "^7.8.1",
+    "@electron-forge/maker-rpm": "^7.8.1",
+    "@electron-forge/maker-squirrel": "^7.8.1",
+    "@electron-forge/maker-zip": "^7.8.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.8.1",
+    "@electron-forge/plugin-fuses": "^7.8.1",
+    "@electron/fuses": "^1.8.0",
+    "electron": "^36.2.0"
   },
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "asar": true, 
+        "executableName": "PDFTableExtractor", 
+        "icon": "path/to/your/icon.ico",
+        "extraResource": [
+          "python", 
+          "venv",   
+          "resources/poppler" 
+        ]
+      },
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "your_pdf_extractor_app",
+            "authors": "Your Name or Company Name", 
+            "description": "A tool to extract tables from PDFs to Excel using Google AI." 
+          }
+        }
+      ]
+    }
+  },
+
   "dependencies": {
     "boolean": "^3.2.0",
     "buffer-crc32": "^0.2.13",
@@ -54,6 +92,7 @@
     "define-data-property": "^1.1.4",
     "define-properties": "^1.2.1",
     "detect-node": "^2.1.0",
+    "electron-squirrel-startup": "^1.0.1",
     "end-of-stream": "^1.4.4",
     "env-paths": "^2.2.1",
     "es-define-property": "^1.0.1",
