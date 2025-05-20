@@ -166,7 +166,7 @@ rm -rf out .cache
 npm cache clean --force
    
 
-#### 4.Generate the Executable Installer
+#### 4. Generate the Executable Installer
 
 -------------------------------------
 
